@@ -1,7 +1,38 @@
+n,m = 5,5
+
+startState = {
+  {0,0,0,0,0},
+  {0,1,0,0,0},
+  {0,1,0,0,0},
+  {0,1,0,0,0},
+  {0,0,0,0,0}
+  }
+
+
 function bool_to_num(v)
   return v and 1 or 0
 end
-function createMatrix(n,m)
+function num_to_bool(v)
+  if v == 0 then return false else return true end
+end
+
+
+function sleep(n)
+  os.execute("sleep " .. tonumber(n))
+end
+
+
+function setMatrixState(state, matrix)
+  for i=1,n do
+    for j=1,m do
+      matrix[i][j].isAlive = num_to_bool(state[i][j])
+    end
+  end
+end
+
+
+
+function createMatrix(n,m)  
   newMatrix = {}  -- should it be local & returned value?
   for i=1, n do
     newMatrix[i] = {}
@@ -63,33 +94,63 @@ function createMatrix(n,m)
   return newMatrix
 end  -- end create Matrix
 
-n,m = 5,5
-m1 = createMatrix(n,m)
-m2 = createMatrix(n,m)
---m1[1][1].neighbours[1].isAlive=true   --reference test
---m1[1][1].neighbours[2].isAlive=true
---m1[1][1].neighbours[3].isAlive=true
---for _, v in ipairs(m1[1][1].neighbours) do -- how to do it???
---   print(v.isALive)
---end
-for i=1,n do
-  for j=1,m do
-    io.write(tostring(bool_to_num(m1[i][j].isAlive))..' ')
+
+function printMatrix(n,m, matrix)
+  for i=1,n do
+    for j=1,m do
+      io.write(tostring(bool_to_num(matrix[i][j].isAlive))..' ')
+    end
+    print()
   end
-  print()
+  print('------------')
 end
+
+
+local currentMatrix = createMatrix(n,m)
+setMatrixState(startState, currentMatrix)
+printMatrix(n,m,currentMatrix)
+local nextMatrix = createMatrix(n,m)
+print(currentMatrix[1][1].neighbours[3].isAlive)
+for k, v in ipairs(currentMatrix[1][1].neighbours) do 
+   print(k, v.isAlive)
+end
+
 
 counter = 50
 while counter ~= 0 do
+  sleep(1)  
   counter = counter - 1
   for i=1,n do
     for j=1,m do
-      --pseudocode
-      --for neigbour in  
+      local crowdFactor = 0
+      for k,v in ipairs(currentMatrix[i][j].neighbours) do
+        if v.isAlive then
+          crowdFactor  = crowdFactor + 1 
+        end        
+      end -- end for neighbours lookup cycle
+      if crowdFactor < 2 then -- underpopulation, dies
+        nextMatrix[i][j].isAlive = false 
+      end
+      if crowdFactor > 3 then -- overcrowded, dies
+        nextMatrix[i][j].isAlive = false 
+      end
+      if currentMatrix[i][j].isAlive and crowdFactor == 2 then  -- continue to live
+        nextMatrix[i][j].isAlive = true
+      end
+      if crowdFactor == 3 then  -- new life born / sustains
+        nextMatrix[i][j].isAlive = true
+      end
     end -- j for end
   end -- i for end
+  print('###############')
+  print('Current:')
+  printMatrix(n,m,currentMatrix)
+  print('Next:')
+  printMatrix(n,m,nextMatrix)
+  print('###############')
+  nextMatrix, currentMatrix = currentMatrix, nextMatrix  
 end -- while end
--- todo: load starting state and run cycle1
+
 --[[
 n = 5, m = 5
 11 12 13 14 15
